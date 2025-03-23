@@ -1,11 +1,23 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
-    mkDefault mkEnableOption mkIf mkOption mkPackageOption types
-    literalExpression;
+    mkDefault
+    mkEnableOption
+    mkIf
+    mkOption
+    mkPackageOption
+    types
+    literalExpression
+    ;
   cfg = config.services.ovn-central;
-in {
+in
+{
   options.services.ovn-central = {
     enable = mkEnableOption "ovn central service";
     package = mkPackageOption pkgs "ovn" { };
@@ -21,8 +33,11 @@ in {
       enable = true;
       description = "Open Virtual Network central components";
       after = [ "network.target" ];
-      wants =
-        [ "ovn-northd.service" "ovn-nb-ovsdb.service" "ovn-sb-ovsdb.service" ];
+      wants = [
+        "ovn-northd.service"
+        "ovn-nb-ovsdb.service"
+        "ovn-sb-ovsdb.service"
+      ];
       unitConfig = { };
       serviceConfig = {
         Type = "oneshot";
@@ -36,16 +51,19 @@ in {
     systemd.services.ovn-northd = {
       enable = true;
       description = "Open Virtual Network central control daemon";
-      after =
-        [ "network.target" "ovn-nb-ovsdb.service" "ovn-sb-ovsdb.service" ];
+      after = [
+        "network.target"
+        "ovn-nb-ovsdb.service"
+        "ovn-sb-ovsdb.service"
+      ];
       partOf = [ "ovn-central.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "forking";
-        ExecStart =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl start_northd --ovn-manage-ovsdb=no --no-monitor ${cfg.ovn_ctl_opts}";
-        ExecStop =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl stop_northd --no-monitor";
+        ExecStart = "${cfg.package}/share/ovn/scripts/ovn-ctl start_northd --ovn-manage-ovsdb=no --no-monitor ${cfg.ovn_ctl_opts}";
+        ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl stop_northd --no-monitor";
         Restart = "on-failure";
         LimitNOFILE = "65535";
         TimeoutStopSec = "15";
@@ -58,11 +76,12 @@ in {
       path = [ "/tmp" ];
       after = [ "network.target" ];
       partOf = [ "ovn-central.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "simple";
-        ExecStart =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl run_nb_ovsdb ${cfg.ovn_ctl_opts}";
+        ExecStart = "${cfg.package}/share/ovn/scripts/ovn-ctl run_nb_ovsdb ${cfg.ovn_ctl_opts}";
         ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl stop_nb_ovsdb";
         Restart = "on-failure";
         LimitNOFILE = "65535";
@@ -76,11 +95,12 @@ in {
       path = [ "/tmp" ];
       after = [ "network.target" ];
       partOf = [ "ovn-central.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "simple";
-        ExecStart =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl run_sb_ovsdb ${cfg.ovn_ctl_opts}";
+        ExecStart = "${cfg.package}/share/ovn/scripts/ovn-ctl run_sb_ovsdb ${cfg.ovn_ctl_opts}";
         ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl stop_sb_ovsdb";
         Restart = "on-failure";
         LimitNOFILE = "65535";

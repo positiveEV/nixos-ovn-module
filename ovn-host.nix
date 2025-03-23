@@ -1,11 +1,23 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
-    mkDefault mkEnableOption mkIf mkOption mkPackageOption literalExpression
-    types;
+    mkDefault
+    mkEnableOption
+    mkIf
+    mkOption
+    mkPackageOption
+    literalExpression
+    types
+    ;
   cfg = config.services.ovn-host;
-in {
+in
+{
   options.services.ovn-host = {
     enable = mkEnableOption "ovn host service";
     package = mkPackageOption pkgs "ovn" { };
@@ -19,7 +31,10 @@ in {
 
   config = mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];
-    boot.kernelModules = [ "tun" "openvswitch" ];
+    boot.kernelModules = [
+      "tun"
+      "openvswitch"
+    ];
     boot.extraModulePackages = [ cfg.package ];
 
     systemd.services.ovn-host = {
@@ -42,15 +57,18 @@ in {
       enable = true;
       description = "Open Virtual Network host control daemon";
       path = [ pkgs.gawk ];
-      after = [ "network.target" "openvswitch-switch.service" ];
+      after = [
+        "network.target"
+        "openvswitch-switch.service"
+      ];
       partOf = [ "ovn-host.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "forking";
-        ExecStart =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl start_controller --ovn-manage-ovsdb=no --no-monitor ${cfg.ovn_ctl_opts}";
-        ExecStop =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl stop_controller --no-monitor";
+        ExecStart = "${cfg.package}/share/ovn/scripts/ovn-ctl start_controller --ovn-manage-ovsdb=no --no-monitor ${cfg.ovn_ctl_opts}";
+        ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl stop_controller --no-monitor";
         Restart = "on-failure";
         LimitNOFILE = "65535";
         TimeoutStopSec = "15";
@@ -60,19 +78,25 @@ in {
     systemd.services.openvswitch-switch = {
       enable = true;
       description = "Open vSwitch";
-      after =
-        [ "ovsdb-server.service" "network-pre.target" "ovs-vswitchd.service" ];
+      after = [
+        "ovsdb-server.service"
+        "network-pre.target"
+        "ovs-vswitchd.service"
+      ];
       before = [ "network.target" ];
       partOf = [ "network.target" ];
-      requires = [ "ovsdb-server.service" "ovs-vswitchd.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      requires = [
+        "ovsdb-server.service"
+        "ovs-vswitchd.service"
+      ];
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "/run/current-system/sw/bin/true";
-        ExecStop =
-          "${cfg.package}/share/ovn/scripts/ovs-ctl  --no-ovsdb-server stop";
-        ExecReload =
-          "${cfg.package}share/openvswitch/scripts/ovs-systemd-reload";
+        ExecStop = "${cfg.package}/share/ovn/scripts/ovs-ctl  --no-ovsdb-server stop";
+        ExecReload = "${cfg.package}share/openvswitch/scripts/ovs-systemd-reload";
         RemainAfterExit = "yes";
       };
     };
@@ -85,20 +109,25 @@ in {
         "network-pre.target"
         "systemd-udev-settle.service"
       ];
-      before = [ "network.target" "networking.service" ];
+      before = [
+        "network.target"
+        "networking.service"
+      ];
       partOf = [ "openvswitch-switch.service" ];
-      path = [ pkgs.gawk pkgs.kmod ];
+      path = [
+        pkgs.gawk
+        pkgs.kmod
+      ];
       requires = [ "ovsdb-server.service" ];
-      unitConfig = { DefaultDependencies = "no"; };
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "forking";
-        ExecStart =
-          "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovsdb-server --no-monitor --system-id=random --no-record-hostname start ${cfg.ovn_ctl_opts}";
-        ExecStop =
-          "${cfg.package}/share/openvswitch/scripts/ovs-ctl  --no-ovsdb-server stop";
+        ExecStart = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovsdb-server --no-monitor --system-id=random --no-record-hostname start ${cfg.ovn_ctl_opts}";
+        ExecStop = "${cfg.package}/share/openvswitch/scripts/ovs-ctl  --no-ovsdb-server stop";
         Restart = "on-failure";
-        ExecReload =
-          "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovsdb-server --no-monitor --system-id=random --no-record-hostname restart ${cfg.ovn_ctl_opts}";
+        ExecReload = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovsdb-server --no-monitor --system-id=random --no-record-hostname restart ${cfg.ovn_ctl_opts}";
         LimitNOFILE = "1048576";
         TimeoutSec = "300";
         OOMScoreAdjust = "900";
@@ -114,19 +143,24 @@ in {
         "dpdk.service"
         "local-fs.target"
       ];
-      before = [ "network.target" "networking.service" ];
+      before = [
+        "network.target"
+        "networking.service"
+      ];
       partOf = [ "openvswitch-switch.service" ];
-      path = [ pkgs.gawk pkgs.util-linux ];
-      unitConfig = { DefaultDependencies = "no"; };
+      path = [
+        pkgs.gawk
+        pkgs.util-linux
+      ];
+      unitConfig = {
+        DefaultDependencies = "no";
+      };
       serviceConfig = {
         Type = "forking";
-        ExecStart =
-          "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-monitor --system-id=random --no-record-hostname start ${cfg.ovn_ctl_opts}";
-        ExecStop =
-          "${cfg.package}/share/ovn/scripts/ovn-ctl --no-ovs-vswitchd stop";
+        ExecStart = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-monitor --system-id=random --no-record-hostname start ${cfg.ovn_ctl_opts}";
+        ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl --no-ovs-vswitchd stop";
         Restart = "on-failure";
-        ExecReload =
-          "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-record-hostname --no-monitor restart ${cfg.ovn_ctl_opts}";
+        ExecReload = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-record-hostname --no-monitor restart ${cfg.ovn_ctl_opts}";
         LimitNOFILE = "1048576";
         TimeoutSec = "300";
         OOMScoreAdjust = "900";

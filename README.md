@@ -19,5 +19,4 @@ network.ovs.connection: unix:/usr/local/var/run/openvswitch/db.sock
 
 ## Known Issues
 
-* The openvswitch-switch does not automatically start. You have to do it yourself using `systemctl start openvswitch-switch`.
-* At shutdown, the OVN and OVS services are stopped before Incusd, so the shutdown process will have to wait for the Incusd stop command to timeout after 10 minutes to complete.
+* At shutdown incus stop command timeouts after 10 minutes.

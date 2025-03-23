@@ -55,6 +55,7 @@ in
       enable = true;
       description = "Open Virtual Network host control daemon";
       path = [ pkgs.gawk ];
+      requires = [ "openvswitch-switch.service" ];
       after = [
         "network.target"
         "openvswitch-switch.service"

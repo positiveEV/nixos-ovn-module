@@ -43,7 +43,6 @@ in
       after = [ "network.target" ];
       requires = [ "network.target" ];
       wants = [ "ovn-controller.service" ];
-      unitConfig = { };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "/run/current-system/sw/bin/true";
@@ -52,7 +51,6 @@ in
       };
       wantedBy = [ "multi-user.target" ];
     };
-
     systemd.services.ovn-controller = {
       enable = true;
       description = "Open Virtual Network host control daemon";
@@ -74,7 +72,6 @@ in
         TimeoutStopSec = "15";
       };
     };
-
     systemd.services.openvswitch-switch = {
       enable = true;
       description = "Open vSwitch";
@@ -89,18 +86,18 @@ in
         "ovsdb-server.service"
         "ovs-vswitchd.service"
       ];
+      path = [ pkgs.gawk ];
       unitConfig = {
         DefaultDependencies = "no";
       };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "/run/current-system/sw/bin/true";
-        ExecStop = "${cfg.package}/share/ovn/scripts/ovs-ctl  --no-ovsdb-server stop";
+        ExecStop = "${cfg.package}/share/openvswitch/scripts/ovs-ctl  --no-ovsdb-server stop";
         ExecReload = "${cfg.package}share/openvswitch/scripts/ovs-systemd-reload";
         RemainAfterExit = "yes";
       };
     };
-
     systemd.services.ovs-vswitchd = {
       enable = true;
       description = "Open vSwitch Forwarding Unit";
@@ -133,7 +130,6 @@ in
         OOMScoreAdjust = "900";
       };
     };
-
     systemd.services.ovsdb-server = {
       enable = true;
       description = "Open vSwitch Database Unit";
@@ -158,7 +154,7 @@ in
       serviceConfig = {
         Type = "forking";
         ExecStart = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-monitor --system-id=random --no-record-hostname start ${cfg.ovn_ctl_opts}";
-        ExecStop = "${cfg.package}/share/ovn/scripts/ovn-ctl --no-ovs-vswitchd stop";
+        ExecStop = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd stop";
         Restart = "on-failure";
         ExecReload = "${cfg.package}/share/openvswitch/scripts/ovs-ctl --no-ovs-vswitchd --no-record-hostname --no-monitor restart ${cfg.ovn_ctl_opts}";
         LimitNOFILE = "1048576";
